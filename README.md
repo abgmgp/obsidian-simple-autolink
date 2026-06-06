@@ -4,7 +4,6 @@ A lightweight [Obsidian](https://obsidian.md) plugin that converts similar match
 
 ---
 
-
 ## Features
 
 - **Automatic detection** (by default) of matching search results when you modify a file by using smart matching to filter the closest possible link. See the match case behavior below for the specifics.
@@ -15,8 +14,6 @@ A lightweight [Obsidian](https://obsidian.md) plugin that converts similar match
 - **Alias masterlist:** allows a single note file to map to multiple aliases, with automatic backfill into each note's frontmatter alias field.
 - **Highly configurable**: Toggle features on or off, add restrictions on the go in the settings page.
 - **Mobile-friendly:** lightweight, cross-platform, and optimized for larger vaults.
-
----
 
 ## How the matching works (and what it won't do)
 
@@ -30,12 +27,8 @@ A lightweight [Obsidian](https://obsidian.md) plugin that converts similar match
 - Titles that are common English words (`the`, `note`) will match aggressively. If you want to restrict these words, either scope them out with the exclude list or keep base-form matching off.
 - Alias/title collisions across notes resolve last-write-wins; the masterlist takes precedence over vault titles, and conflicts are logged accordingly.
 
----
-
 ## Warning
 ### Before trying, make sure to backup your vault before you try the manual vault link feature. Your way of writing in your vault might not automatically translate on how the matching functionality of this plugin works. 
-
----
 
 ## Usage
 
@@ -54,8 +47,6 @@ so **Undo** reverts a file cleanly.
 Turn on **Settings → Auto-link → Link on save**. Editing and saving a note then
 links it automatically. The trigger is debounced (300 ms per file) and guards
 against reacting to its own writes, so it never loops.
-
----
 
 ## Configuration
 
@@ -87,8 +78,6 @@ Concepts
 Projects/**
 Daily/2024-*.md
 ```
-
-
 ### Dynamic Alias Masterlist
 
 The alias masterlist allows for the addition of extra search terms that point at a different note that may or may not be beyond the target note's title and its own frontmatter aliases.
@@ -125,15 +114,11 @@ With the rule provided above, "check the application programming  interface" lin
 When **"Write aliases back to notes"** is on (default), the first time a note is linked via a masterlist alias, that alias is added to the note's frontmatter `aliases:` (using Obsidian's safe `processFrontMatter` API — existing aliases
 are never removed or reordered). This makes the alias work everywhere Obsidian resolves links, not just inside Auto-link.
 
----
-
 ## Privacy & safety
 
 - All file reads and writes go through Obsidian's Vault / FileManager APIs.
 - No network access, no telemetry, no Node/filesystem access.
 - Frontmatter is only edited through Obsidian's own `processFrontMatter` method.
-
----
 
 ## Installation
 
@@ -143,9 +128,9 @@ are never removed or reordered). This makes the alias work everywhere Obsidian r
   them into `<your-vault>/.obsidian/plugins/obsidian-simple-autolink/`, then enable the
   plugin in Settings.
 
----
-
 ## Development
+
+In order to setup the source files, clone the repository, open your editor/tool of choice then run the following:
 
 ```sh
 npm install
@@ -154,17 +139,9 @@ npm run build   # type-check (strict) + production bundle
 npm test        # Vitest unit + perf tests
 ```
 
-Pure logic lives in `src/core` and `src/util` with **zero** Obsidian imports and
-is fully unit-tested; `src/triggers` and `src/settings` hold the Obsidian-facing
-code. See `MOBILE-QA.md` for the on-device validation checklist.
-
----
-
 ## Disclaimer
 
-This plugin was created with assistance from Artificial Intelligence tools. Human intervention was done during the drafting, feature mapping, and validation (source code and functionality) phase. If that does not sit well with you, please consider using other alternatives:
-
----
+This plugin was created with assistance from Artificial Intelligence tools. Human intervention was done during the drafting, feature mapping, and validation (source code and functionality) phase. If that does not sit well with you, please consider using other alternatives.
 
 ## License
 
