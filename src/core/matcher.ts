@@ -107,7 +107,25 @@ function tokenize(text: string): Token[] {
 
 /**
  * Compute replacements for `text`. Returns non-overlapping replacements ordered
- * by position. Honors skip ranges, self-reference, and one-link-per-file.
+ * by position.
+ *
+ * Smart-matching filter hierarchy (highest precedence first). Folder
+ * include/exclude (batch-level) is applied by the caller before we ever see the
+ * file; the remaining steps run here, per candidate span:
+ *
+ *   1. folder includes/excludes  — caller (out of scope here)
+ *   2. skips                     — never link inside a skip range
+ *   3. alias / self-reference    — resolve the term, drop self-links
+ *   4. case sensitivity          — folded into the normalized key lookup
+ *   5. one-link-per-file         — if on, link each target at most once,
+ *                                  counting wikilinks ALREADY in the file so a
+ *                                  pre-existing link wins and re-runs are no-ops
+ *   6. plural matching           — folded into the normalized key (base form)
+ *
+ * Steps 4 and 6 are not separate branches: case folding and base-form
+ * stripping are baked into `normalize()`, so the index key already encodes
+ * them. The explicit branches below implement 2, 3, and 5 in that order, and
+ * one-link-per-file is seeded from existing links so it actually takes effect.
  */
 export function findReplacements(
   text: string,
@@ -117,7 +135,13 @@ export function findReplacements(
 ): Replacement[] {
   const tokens = tokenize(text);
   const replacements: Replacement[] = [];
-  const linkedTargets = new Set<string>(); // target.path, for oneLinkPerFile
+
+  // (5) One-link-per-file: seed the dedupe set with targets that are ALREADY
+  // linked in this file. A pre-existing [[wikilink]] counts as the one allowed
+  // link, so later plain-text occurrences are skipped and re-runs are no-ops.
+  const linkedTargets = opts.oneLinkPerFile
+    ? collectExistingTargets(text, index, opts.normalize)
+    : new Set<string>();
 
   let ti = 0;
   while (ti < tokens.length) {
@@ -129,15 +153,19 @@ export function findReplacements(
       const first = tokens[ti];
       const last = tokens[ti + span - 1];
       const surface = text.slice(first.start, last.end);
+
+      // (2) Skips: don't link inside a skip range (existing links, code, …).
+      if (rangeOverlaps(skips, first.start, last.end)) continue;
+
+      // (4)+(6) Case + plural: resolve via the normalized key, which already
+      // encodes case folding and base-form (plural) stripping.
       const key = normalize(surface, opts.normalize);
       const entry = index.byKey.get(key);
+      // (3) Alias/title hit? No entry => not a match.
       if (!entry) continue;
-
-      // Don't link inside a skip range.
-      if (rangeOverlaps(skips, first.start, last.end)) continue;
-      // Self-reference guard.
+      // (3) Self-reference guard: never link a note to itself.
       if (entry.target.path === opts.sourcePath) continue;
-      // One-link-per-file dedupe.
+      // (5) One-link-per-file dedupe (counts existing links via the seed above).
       if (opts.oneLinkPerFile && linkedTargets.has(entry.target.path)) continue;
 
       matched = { entry, start: first.start, end: last.end, surface };
@@ -162,6 +190,31 @@ export function findReplacements(
   }
 
   return replacements;
+}
+
+/**
+ * Scan `text` for existing wikilinks (`[[Target]]` / `[[Target|alias]]` /
+ * `[[Target#heading]]`) and return the set of target paths they resolve to via
+ * the index. Used to seed one-link-per-file so a link already present in the
+ * file counts as "the one link" and is never duplicated. Pure.
+ */
+function collectExistingTargets(
+  text: string,
+  index: MatchIndex,
+  normalizeOpts: NormalizeOptions,
+): Set<string> {
+  const targets = new Set<string>();
+  const re = /\[\[([^\]]+)\]\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    // The destination is the part before any "|" (display alias) or "#"
+    // (heading/block ref). Trim so "[[ Foo | bar ]]" still resolves.
+    const dest = m[1].split("|")[0].split("#")[0].trim();
+    if (dest === "") continue;
+    const entry = index.byKey.get(normalize(dest, normalizeOpts));
+    if (entry) targets.add(entry.target.path);
+  }
+  return targets;
 }
 
 /**

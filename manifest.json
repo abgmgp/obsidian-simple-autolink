@@ -1,7 +1,7 @@
 {
   "id": "simple-autolink",
   "name": "Simple Auto-Link",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.12.7",
   "description": "Convert plain-text mentions of note titles and aliases into wiki links. Highly configurable.",
   "author": "abgmgp",

@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Released]
 
+## [1.0.3] - 2026-06-07
+
+### Fixed
+
+- **One-link-per-file now counts existing links.** When the option is enabled,
+  a wikilink already present in a note is treated as the one allowed link, so
+  later plain-text mentions of the same target are skipped and repeated runs
+  (including on-save) no longer accumulate duplicate links. The smart-matching
+  filter order was also made explicit: skips → alias/self-reference → case →
+  one-link-per-file → plural matching.
+
 ## [1.0.0] - 2026-06-06
 
 Initial release.
@@ -26,6 +37,7 @@ Initial release.
   aliases, can be toggled on or off.
 - **Mobile support:** built for cross-platform support, and optimized for larger vaults.
 
-[Released]: https://github.com/abgmgp/obsidian-simple-autolink/compare/1.0.0...HEAD
+[Released]: https://github.com/abgmgp/obsidian-simple-autolink/compare/1.0.3...HEAD
+[1.0.3]: https://github.com/abgmgp/obsidian-simple-autolink/compare/1.0.0...1.0.3
 [1.0.0]: https://github.com/abgmgp/obsidian-simple-autolink/releases/tag/1.0.0
 
