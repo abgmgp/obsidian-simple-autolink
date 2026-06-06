@@ -118,5 +118,5 @@ function mergeInto(target: Map<string, Set<string>>, source: Map<string, Set<str
 }
 
 function yieldToEventLoop(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
