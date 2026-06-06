@@ -1,6 +1,6 @@
 # Simple Auto-Link
 
-A lightweight [Obsidian](https://obsidian.md) plugin that converts similar matching words into `[[wiki links]]` on the go. Supports both desktop and mobile (iOS + Android) devices.
+Converts similar matching words into wiki links on the go. Highly customizable. Supports both desktop and mobile (iOS + Android) versions of [Obsidian](https://obsidian.md).
 
 ---
 
@@ -17,7 +17,7 @@ A lightweight [Obsidian](https://obsidian.md) plugin that converts similar match
 
 ## How the matching works (and what it won't do)
 
-- Longer match cases are preferred than shorter ones.Matching is case-insensitive by default, can be toggled in the settings.
+- Longer match cases are preferred than shorter ones. Matching is case-insensitive by default, can be toggled in the settings.
 - A note is **never** linked to itself.
 - Word-boundary aware, the plugin will never links inside another word (For example, `concatenate` won't match `cat`). 
 - Optional **base word** matching so that plural words (`cats`) links to a note titled `cat`.
