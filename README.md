@@ -8,27 +8,25 @@ Converts similar matching words into wiki links on the go. Highly customizable. 
 
 - **Automatic detection** (by default) of matching search results when you modify a file by using smart matching to filter the closest possible link. See the match case behavior below for the specifics.
 - Code blocks, inline code, existing links,
-  frontmatter, and math are always skipped. Headings and tables can be skipped with their respective settings option.
-- Include/exclude folders for manual vault linking. Excluded notes
-  are neither scanned nor used as link targets.
-- **Alias masterlist:** allows a single note file to map to multiple aliases, with automatic backfill into each note's frontmatter alias field.
-- **Highly configurable**: Toggle features on or off, add restrictions on the go in the settings page.
-- **Mobile-friendly:** lightweight, cross-platform, and optimized for larger vaults.
+  YAML properties, and math are always skipped. Headings and tables can be skipped with their respective settings option.
+- Include/exclude folders for manual vault linking. Excluded notes are neither scanned nor used as link targets.
+- **Alias masterlist:** allows a single note file to map to multiple aliases, with automatic backfill into each note's YAML alias field.
+- **Highly configurable**: Toggle features on or off in the plugin's settings page.
+- **Mobile-friendly:** lightweight, cross-platform, and optimized to support larger vaults.
 
 ## How the matching works (and what it won't do)
 
-- Longer match cases are preferred than shorter ones. Matching is case-insensitive by default, can be toggled in the settings.
-- A note is **never** linked to itself.
+- Longer match cases are preferred than shorter ones. Matching is case-insensitive by default, can be toggled in the settings. A note is **never** linked to itself.
 - Word-boundary aware, the plugin will never links inside another word (For example, `concatenate` won't match `cat`). 
 - Optional **base word** matching so that plural words (`cats`) links to a note titled `cat`.
 - Optional **one link per file** so a note isn't linked over and 
   over.
 - When the matched text differs from the note title (case difference or an alias), Auto-link writes a display link: `[[Canonical|what you typed]]`.
-- Titles that are common English words (`the`, `note`) will match aggressively. If you want to restrict these words, either scope them out with the exclude list or keep base-form matching off.
-- Alias/title collisions across notes resolve last-write-wins; the masterlist takes precedence over vault titles, and conflicts are logged accordingly.
+- Titles that are common English words (`the`, `note`) will match aggressively. If you want to restrict these words, either scope them out with the folder exclude list or keep base-form matching off.
+- Title detection conflicts across notes resolve last-write-wins; the masterlist takes precedence over vault titles.
 
 ## Warning
-### Before trying, make sure to backup your vault before you try the manual vault link feature. Your way of writing in your vault might not automatically translate on how the matching functionality of this plugin works. 
+### Make sure to create a backup your vault before you try the vault-wide manual link feature. Your way of writing in your vault might not automatically translate on how the matching functionality of this plugin works.
 
 ## Usage
 
@@ -38,15 +36,11 @@ Click the **link** ribbon icon, or open the command palette and run
 **"Auto-link: Scan whole vault"** to toggle manual linking. You can also bind a hotkey to that command in
 **Settings → Hotkeys**.
 
-A progress notice shows `N/total…` while it runs, then a summary of how many
-links were added across how many notes. Each note is written in a single edit,
-so **Undo** reverts a file cleanly.
+A summary of how many links were added across how many notes are edited within a single run session will be shown once the process is completed.
 
 ### Run on save
 
-Turn on **Settings → Auto-link → Link on save**. Editing and saving a note then
-links it automatically. The trigger is debounced (300 ms per file) and guards
-against reacting to its own writes, so it never loops.
+Turn on **Settings → Auto-link → Link on save**. Editing and saving a note triggers the linking process it automatically.
 
 ## Configuration
 
@@ -54,15 +48,15 @@ You can configure the following options in the settings page to turn features on
 
 | Setting | What it does |
 | --- | --- |
-| **Case sensitive** | Turns case sensitivty on or off (default). |
+| **Case sensitivity** | Turns case sensitivty on or off (default). |
 | **Match base form** | Links simple plurals to their singular note. Turned off by default to avoid over-linking. |
 | **One link per file** | Links each target note only once per file, with first occurrence basis. On by default. |
-| **Skip → Headings** | Don't link inside headings. |
-| **Skip → Tables** | Don't link inside tables. |
+| **Skip → Headings** | Don't link inside headings. Turned off by default. |
+| **Skip → Tables** | Don't link inside tables. Turned off by default.|
 | **Link on save** | Auto-link notes when the current note is modified. |
 | **Include folders** | Include folders based on path. One folder path per line. Empty defaults to whole vault. |
 | **Exclude folders** | Exclude folders based on path. Excluded notes are skipped and never used as targets. |
-| **Alias masterlist** | Toggle the feature on or off, set the file path, and optionally write matched aliases back to frontmatter (see below). |
+| **Alias masterlist** | Toggle the feature on or off, set the file path, and optionally write matched aliases back to the main note's YAML property (see below). |
 
 ### Folder matching
 
@@ -107,28 +101,30 @@ Timetable: time table, tt
 API: application programming interface, api
 ```
 
-With the rule provided above, "check the application programming  interface" links to `[[API|application programming interface]]`.
+### YAML Property Auto-Add
 
-### Write back to notes
+When **"Write aliases back to notes"** is on (default), the first time a note is linked via a masterlist alias, that alias is added to the note's YAML `aliases` property. No existing aliases are removed or reordered. This makes the alias work everywhere Obsidian resolves links, not just inside the plugin.
 
-When **"Write aliases back to notes"** is on (default), the first time a note is linked via a masterlist alias, that alias is added to the note's frontmatter `aliases:` (using Obsidian's safe `processFrontMatter` API — existing aliases
-are never removed or reordered). This makes the alias work everywhere Obsidian resolves links, not just inside Auto-link.
+## Roadmap
+- Improve alias masterlist to allow blacklisting of certain keywords
+- Choice for certain keywords to auto-link up to the base folder only, specific folders, or to exclude specific folders
+- **You tell me**!
 
-## Privacy & safety
+## Privacy & Safety
 
 - All file reads and writes go through Obsidian's Vault / FileManager APIs.
 - No network access, no telemetry, no Node/filesystem access.
-- Frontmatter is only edited through Obsidian's own `processFrontMatter` method.
+- Properties are only edited through Obsidian's own `processFrontMatter` method.
 
 ## Installation
-
+- **Using the Community Manager:** Go to **Obsidian -> Settings -> Community Plugins -> Browse**, search for **Simple Auto-Link**, then click install. Make sure Community Plugins are turned on before doing the following steps.
 - **Using BRAT:** Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat)
   plugin, then "Add beta plugin" with this repository URL.
 - **Manual installation:** Download `main.js` and `manifest.json` from a release and copy
   them into `<your-vault>/.obsidian/plugins/obsidian-simple-autolink/`, then enable the
   plugin in Settings.
 
-## Development
+## Development and Contribution
 
 In order to setup the source files, clone the repository, open your editor/tool of choice then run the following:
 
@@ -141,7 +137,7 @@ npm test        # Vitest unit + perf tests
 
 ## Disclaimer
 
-This plugin was created with assistance from Artificial Intelligence tools. Human intervention was done during the drafting, feature mapping, and validation (source code and functionality) phase. If that does not sit well with you, please consider using other alternatives.
+This plugin was created with assistance from Artificial Intelligence tools. Human intervention was done during the drafting, feature development, and validation (source code and functionality) of the project. If that does not sit well with you, please consider using other alternatives.
 
 ## License
 
