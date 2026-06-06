@@ -1,0 +1,25 @@
+# build
+main.js
+*.js.map
+
+# deps
+node_modules/
+
+# obsidian
+data.json
+
+# editor
+.vscode/
+.idea/
+
+# os
+.DS_Store
+
+# build plan
+.claude
+
+# tests
+tests
+
+# release
+dist

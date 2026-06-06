@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-simple-autolink",
+  "name": "Simple Auto-Link",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Convert plain-text mentions of note titles and aliases into wiki links. Highly configurable.",
+  "author": "abgmgp",
+  "authorUrl": "https://github.com/abgmgp",
+  "isDesktopOnly": false
+}
