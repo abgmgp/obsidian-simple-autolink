@@ -67,13 +67,13 @@ describe("masterlistRawTerms", () => {
 
   it("resolves canonicals to files and emits alias raw terms", () => {
     const { raw, unresolved } = masterlistRawTerms(
-      [{ canonical: "Timetable", aliases: ["time table", "table of time"] }],
+      [{ canonical: "Timetable", aliases: ["time table", "tt"] }],
       resolve,
     );
     expect(unresolved).toEqual([]);
     expect(raw).toEqual([
       { term: "time table", path: "Concepts/Timetable.md", canonical: "Timetable", alias: "time table" },
-      { term: "table of time", path: "Concepts/Timetable.md", canonical: "Timetable", alias: "table of time" },
+      { term: "tt", path: "Concepts/Timetable.md", canonical: "Timetable", alias: "tt" },
     ]);
   });
 
