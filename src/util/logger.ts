@@ -38,7 +38,9 @@ export class Logger {
   }
 
   info(...args: unknown[]): void {
-    if (this.enabled("info")) console.log(PREFIX, ...args);
+    // console.debug (not log/info) per Obsidian plugin guidelines, which only
+    // permit warn/error/debug.
+    if (this.enabled("info")) console.debug(PREFIX, ...args);
   }
 
   debug(...args: unknown[]): void {
