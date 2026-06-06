@@ -1,6 +1,6 @@
 {
   "name": "simple-autolink",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Convert plain-text mentions of note titles and aliases into wiki links.",
   "main": "main.js",
   "scripts": {
