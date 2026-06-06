@@ -9,6 +9,11 @@
  * control is expressed through a `render` callback so it keeps full control of
  * its Setting; conditional rows use `visible` predicates and re-evaluate when
  * we call update().
+ *
+ * For Obsidian versions older than 1.13.0 — which never call
+ * getSettingDefinitions() — display() is implemented as a fallback that walks
+ * those same definitions and renders them imperatively. The definitions stay
+ * the single source of truth for both paths.
  */
 
 import {
@@ -155,7 +160,7 @@ export class AutoLinkSettingTab extends PluginSettingTab {
                 t.setValue(s.masterlistEnabled).onChange(async (v) => {
                   s.masterlistEnabled = v;
                   await this.plugin.saveSettings();
-                  this.update(); // show/hide the dependent controls
+                  this.rerender(); // show/hide the dependent controls
                 }),
               );
             },
@@ -173,11 +178,11 @@ export class AutoLinkSettingTab extends PluginSettingTab {
                   .onChange(async (v) => {
                     s.masterlistPath = v.trim();
                     await this.plugin.saveSettings();
-                    this.update();
+                    this.rerender();
                   });
                 new MarkdownFileSuggest(this.app, search.inputEl, (path) => {
                   s.masterlistPath = path;
-                  void this.plugin.saveSettings().then(() => this.update());
+                  void this.plugin.saveSettings().then(() => this.rerender());
                 });
               });
             },
@@ -202,7 +207,7 @@ export class AutoLinkSettingTab extends PluginSettingTab {
                   .setCta()
                   .onClick(async () => {
                     const created = await this.plugin.createMasterlistTemplate();
-                    if (created) this.update();
+                    if (created) this.rerender();
                   }),
               );
             },
@@ -235,6 +240,62 @@ export class AutoLinkSettingTab extends PluginSettingTab {
         ],
       },
     ];
+  }
+
+  /**
+   * Imperative fallback for Obsidian < 1.13.0, which never invokes
+   * getSettingDefinitions(). Walks the same definitions so there is a single
+   * source of truth. On 1.13.0+ the base class renders from the definitions and
+   * does not call this (display() is not invoked when getSettingDefinitions
+   * returns a non-empty array).
+   */
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+    for (const def of this.getSettingDefinitions()) {
+      this.renderDefinition(containerEl, def);
+    }
+  }
+
+  /**
+   * Re-render the tab after state that `visible` predicates depend on changes.
+   * Uses update() on 1.13.0+ (cheap, in-place); falls back to display() on
+   * older versions where update() does not exist.
+   */
+  private rerender(): void {
+    const maybeUpdate = (this as { update?: () => void }).update;
+    if (typeof maybeUpdate === "function") {
+      maybeUpdate.call(this);
+    } else {
+      this.display();
+    }
+  }
+
+  /** Render one definition item (group or leaf) imperatively. */
+  private renderDefinition(
+    containerEl: HTMLElement,
+    def: SettingDefinitionItem | SettingGroupItem,
+  ): void {
+    if (!isVisible(def)) return;
+
+    // Groups: render the heading row, then their items.
+    if ("type" in def && (def.type === "group" || def.type === "list")) {
+      if (def.heading) {
+        new Setting(containerEl).setName(def.heading).setHeading();
+      }
+      for (const item of def.items ?? []) {
+        this.renderDefinition(containerEl, item);
+      }
+      return;
+    }
+
+    // Leaf items: only the `render`-based controls are used in this tab.
+    if ("render" in def && typeof def.render === "function") {
+      const setting = new Setting(containerEl);
+      if ("name" in def && def.name) setting.setName(def.name);
+      if ("desc" in def && def.desc) setting.setDesc(def.desc);
+      def.render(setting, undefined as never);
+    }
   }
 
   /** Render the masterlist validity indicator into the given setting's row. */
@@ -280,6 +341,13 @@ export class AutoLinkSettingTab extends PluginSettingTab {
       },
     };
   }
+}
+
+/** Evaluate a definition's `visible` predicate (boolean or thunk; default true). */
+function isVisible(def: { visible?: boolean | (() => boolean) }): boolean {
+  const v = def.visible;
+  if (v === undefined) return true;
+  return typeof v === "function" ? v() : v;
 }
 
 /** Split a textarea value into trimmed, non-empty lines. */
