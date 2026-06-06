@@ -50,13 +50,16 @@ export async function backfillAliases(
     if (missing.length === 0) continue;
 
     try {
-      await app.fileManager.processFrontMatter(file, (fm) => {
-        const current = normalizeAliasField(fm.aliases);
-        // Re-check inside the transaction in case fm changed since the cache read.
-        const toAdd = missing.filter((a) => !current.includes(a));
-        if (toAdd.length === 0) return;
-        fm.aliases = [...current, ...toAdd];
-      });
+      await app.fileManager.processFrontMatter(
+        file,
+        (fm: Record<string, unknown>) => {
+          const current = normalizeAliasField(fm.aliases);
+          // Re-check inside the transaction in case fm changed since the cache read.
+          const toAdd = missing.filter((a) => !current.includes(a));
+          if (toAdd.length === 0) return;
+          fm.aliases = [...current, ...toAdd];
+        },
+      );
       modified++;
       log.debug(`added aliases to ${path}: ${missing.join(", ")}`);
     } catch (err) {

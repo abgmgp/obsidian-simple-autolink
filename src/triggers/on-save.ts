@@ -116,7 +116,7 @@ export class OnSaveTrigger {
               await backfillAliases(this.deps.app, wanted, this.deps.log);
             } finally {
               for (const p of wanted.keys()) {
-                setTimeout(() => this.selfWrites.delete(p), 0);
+                window.setTimeout(() => this.selfWrites.delete(p), 0);
               }
             }
           }
@@ -124,7 +124,7 @@ export class OnSaveTrigger {
       } finally {
         // Release after the write settles so the resulting modify event,
         // which is dispatched asynchronously, still sees the guard.
-        setTimeout(() => this.selfWrites.delete(file.path), 0);
+        window.setTimeout(() => this.selfWrites.delete(file.path), 0);
       }
     } catch (err) {
       this.selfWrites.delete(file.path);
