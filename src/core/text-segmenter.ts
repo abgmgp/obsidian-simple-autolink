@@ -141,12 +141,15 @@ export function computeSkipRanges(text: string, opts: SkipOptions): SkipRange[] 
  */
 function scanTags(text: string, inBlock: (pos: number) => boolean): SkipRange[] {
   const ranges: SkipRange[] = [];
-  // Boundary via lookbehind: start-of-string or any non-tag-body char. The
-  // body requires at least one letter somewhere (enforced by the `\p{L}` in
-  // the middle), so pure-digit `#123` and bare `#` won't match.
-  const re = /(?<=^|[^\p{L}\p{N}_/\-])#[\p{L}\p{N}_/\-]*\p{L}[\p{L}\p{N}_/\-]*/gu;
+  // Body requires at least one letter (the `\p{L}` in the middle), so
+  // pure-digit `#123` and bare `#` don't match. Boundary (start-of-string or
+  // a non-tag-body char before `#`) is checked manually to stay compatible
+  // with engines that lack lookbehind (iOS < 16.4).
+  const body = /[\p{L}\p{N}_/-]/u;
+  const re = /#[\p{L}\p{N}_/-]*\p{L}[\p{L}\p{N}_/-]*/gu;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
+    if (m.index > 0 && body.test(text[m.index - 1])) continue;
     if (inBlock(m.index)) continue;
     ranges.push({ start: m.index, end: m.index + m[0].length });
   }
