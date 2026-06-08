@@ -97,6 +97,61 @@ describe("tables are always skipped", () => {
   });
 });
 
+describe("Obsidian tags are skipped", () => {
+  it("does not link a word that is part of an #obsidian-tag", () => {
+    const { replacements } = link("I want to tag #learning today", [
+      ["learning", "Learning", "Learning.md"],
+    ]);
+    expect(replacements).toEqual([]);
+  });
+
+  it("still links the same word elsewhere when it also appears as a tag", () => {
+    const { out } = link("learning is fun #learning", [
+      ["learning", "Learning", "Learning.md"],
+    ]);
+    expect(out).toBe("[[Learning|learning]] is fun #learning");
+  });
+
+  it("skips nested tags like #projects/obsidian", () => {
+    const { replacements } = link("see #projects/obsidian here", [
+      ["obsidian", "Obsidian", "Obsidian.md"],
+      ["projects", "Projects", "Projects.md"],
+    ]);
+    expect(replacements).toEqual([]);
+  });
+
+  it("does not treat a markdown heading `# Word` as a tag", () => {
+    // Heading skip is OFF by default, so 'Word' should still link.
+    const { replacements } = link("# Word here", [["Word", "Word", "Word.md"]]);
+    expect(replacements).toHaveLength(1);
+  });
+
+  it("does not treat a URL fragment as a tag", () => {
+    const { out } = link("see example.com/#section about section", [
+      ["section", "Section", "Section.md"],
+    ]);
+    // The 'section' inside the URL fragment is not a tag and not skipped by
+    // the tag rule; the standalone 'section' after must still link.
+    expect(out).toContain("[[Section|section]]");
+  });
+
+  it("does not treat a pure-digit `#123` as a tag", () => {
+    const { out } = link("ticket #123 about widget", [
+      ["widget", "Widget", "Widget.md"],
+    ]);
+    expect(out).toBe("ticket #123 about [[Widget|widget]]");
+  });
+
+  it("can be disabled via SkipOptions.tags=false", () => {
+    const { out } = link(
+      "#learning matters",
+      [["learning", "Learning", "Learning.md"]],
+      { tags: false },
+    );
+    expect(out).toBe("#[[Learning|learning]] matters");
+  });
+});
+
 describe("scopeAllows", () => {
   const target = (path: string, scope?: "vault" | "block" | "folder" | "root") => ({
     canonical: "X",

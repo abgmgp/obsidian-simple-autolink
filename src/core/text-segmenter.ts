@@ -21,6 +21,7 @@ export interface SkipOptions {
   headings: boolean;
   math: boolean; // $inline$ and $$block$$
   tables: boolean; // GFM pipe tables
+  tags: boolean; // Obsidian #tags
 }
 
 export const DEFAULT_SKIP_OPTIONS: SkipOptions = {
@@ -31,6 +32,7 @@ export const DEFAULT_SKIP_OPTIONS: SkipOptions = {
   headings: false,
   math: true,
   tables: true,
+  tags: true,
 };
 
 /** A half-open character range [start, end) to skip. */
@@ -123,7 +125,32 @@ export function computeSkipRanges(text: string, opts: SkipOptions): SkipRange[] 
   const inline = scanInline(text, opts, (pos) => rangeOverlaps(blockSkips, pos, pos + 1));
   ranges.push(...inline);
 
+  // --- Obsidian #tags: full-text regex pass, filtered against block skips. ---
+  if (opts.tags) {
+    ranges.push(...scanTags(text, (pos) => rangeOverlaps(blockSkips, pos, pos + 1)));
+  }
+
   return mergeRanges(ranges);
+}
+
+/**
+ * Find Obsidian tag spans (`#word`, `#nested/sub-tag`). A tag must be preceded
+ * by start-of-string or a non-word character (so `foo#bar` and URL fragments
+ * like `example.com/#section` are not tags), contains letters/digits/`_`/`-`/`/`,
+ * and must include at least one letter (`#123` is not a tag in Obsidian).
+ */
+function scanTags(text: string, inBlock: (pos: number) => boolean): SkipRange[] {
+  const ranges: SkipRange[] = [];
+  // Boundary via lookbehind: start-of-string or any non-tag-body char. The
+  // body requires at least one letter somewhere (enforced by the `\p{L}` in
+  // the middle), so pure-digit `#123` and bare `#` won't match.
+  const re = /(?<=^|[^\p{L}\p{N}_/\-])#[\p{L}\p{N}_/\-]*\p{L}[\p{L}\p{N}_/\-]*/gu;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (inBlock(m.index)) continue;
+    ranges.push({ start: m.index, end: m.index + m[0].length });
+  }
+  return ranges;
 }
 
 /** Match a fenced-code opening/closing line; returns the fence char or null. */
