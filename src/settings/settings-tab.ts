@@ -119,7 +119,11 @@ export class AutoLinkSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Alias masterlist")
       .setDesc(
-        "One mapping per line. Format: 'Note name: alias1, alias2'. Aliases link to the note and are added to its property on first link.",
+        "One mapping per line. Format: 'Tag: Note name: alias1, alias2'. Aliases link to the note and are added to its property on first link. " +
+          "Optional tags: The " +
+          "'block' tag restricts note titles. Include aliases to block for those specific aliases only. The " +
+          "'folder' tag triggers only when source shares the target's parent folder. The " +
+          "'root' tag triggers when source shares the target's top-level folder.",
       )
       .setHeading();
 
