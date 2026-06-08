@@ -85,4 +85,72 @@ describe("masterlistRawTerms", () => {
     expect(raw).toEqual([]);
     expect(unresolved).toEqual(["Ghost"]);
   });
+
+  it("propagates folder/root scope into raw terms", () => {
+    const { raw } = masterlistRawTerms(
+      [
+        { canonical: "Timetable", aliases: ["tt"], scope: "folder" },
+        { canonical: "Timetable", aliases: ["table"], scope: "root" },
+      ],
+      resolve,
+    );
+    expect(raw).toEqual([
+      { term: "tt", path: "Concepts/Timetable.md", canonical: "Timetable", alias: "tt", scope: "folder" },
+      { term: "table", path: "Concepts/Timetable.md", canonical: "Timetable", alias: "table", scope: "root" },
+    ]);
+  });
+
+  it("returns block directives for block: entries", () => {
+    const { raw, blocks } = masterlistRawTerms(
+      [
+        { canonical: "Timetable", aliases: [], scope: "block" },
+      ],
+      resolve,
+    );
+    expect(raw).toEqual([]);
+    expect(blocks).toEqual([
+      { path: "Concepts/Timetable.md", allTerms: true, terms: new Set() },
+    ]);
+  });
+
+  it("folder/root without aliases emits a scope directive (no raw terms)", () => {
+    const { raw, scopes } = masterlistRawTerms(
+      [
+        { canonical: "Timetable", aliases: [], scope: "folder" },
+      ],
+      resolve,
+    );
+    expect(raw).toEqual([]);
+    expect(scopes).toEqual([
+      { path: "Concepts/Timetable.md", scope: "folder" },
+    ]);
+  });
+
+  it("folder/root with aliases emits BOTH scoped raw terms AND a scope directive", () => {
+    const { raw, scopes } = masterlistRawTerms(
+      [
+        { canonical: "Timetable", aliases: ["tt"], scope: "root" },
+      ],
+      resolve,
+    );
+    expect(raw).toHaveLength(1);
+    expect(raw[0].scope).toBe("root");
+    expect(scopes).toEqual([
+      { path: "Concepts/Timetable.md", scope: "root" },
+    ]);
+  });
+
+  it("block with aliases targets only those surface terms", () => {
+    const { raw, blocks } = masterlistRawTerms(
+      [
+        { canonical: "Timetable", aliases: ["tt", "table"], scope: "block" },
+      ],
+      resolve,
+    );
+    expect(raw).toEqual([]);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].path).toBe("Concepts/Timetable.md");
+    expect(blocks[0].allTerms).toBe(false);
+    expect([...blocks[0].terms].sort()).toEqual(["table", "tt"]);
+  });
 });

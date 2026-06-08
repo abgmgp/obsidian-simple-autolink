@@ -3,6 +3,7 @@ import {
   buildMatchIndex,
   findReplacements,
   applyReplacements,
+  scopeAllows,
   IndexEntry,
 } from "../src/core/matcher";
 import { normalize, NormalizeOptions } from "../src/core/normalizer";
@@ -93,6 +94,98 @@ describe("tables are always skipped", () => {
       sourcePath: "note.md",
     });
     expect(replacements).toEqual([]);
+  });
+});
+
+describe("scopeAllows", () => {
+  const target = (path: string, scope?: "vault" | "block" | "folder" | "root") => ({
+    canonical: "X",
+    path,
+    scope,
+  });
+
+  it("allows vault-wide (undefined and 'vault')", () => {
+    expect(scopeAllows(target("a/b/c.md"), "x/y.md")).toBe(true);
+    expect(scopeAllows(target("a/b/c.md", "vault"), "x/y.md")).toBe(true);
+  });
+
+  it("blocks 'block' scope unconditionally", () => {
+    expect(scopeAllows(target("a/b/c.md", "block"), "a/b/d.md")).toBe(false);
+  });
+
+  it("folder scope requires same parent directory", () => {
+    expect(scopeAllows(target("a/b/c.md", "folder"), "a/b/d.md")).toBe(true);
+    expect(scopeAllows(target("a/b/c.md", "folder"), "a/x/d.md")).toBe(false);
+    expect(scopeAllows(target("top.md", "folder"), "other.md")).toBe(true);
+    expect(scopeAllows(target("top.md", "folder"), "sub/other.md")).toBe(false);
+  });
+
+  it("root scope requires same top-level segment", () => {
+    expect(
+      scopeAllows(target("Programming/Ideas/View.md", "root"), "Programming/Other.md"),
+    ).toBe(true);
+    expect(
+      scopeAllows(target("Programming/Ideas/View.md", "root"), "Programming/Views/x.md"),
+    ).toBe(true);
+    expect(
+      scopeAllows(target("Programming/Ideas/View.md", "root"), "Journal/2026.md"),
+    ).toBe(false);
+  });
+});
+
+describe("findReplacements - scope guard", () => {
+  function withScope(
+    sourcePath: string,
+    target: { canonical: string; path: string; scope?: "vault" | "block" | "folder" | "root" },
+    surface: string,
+  ) {
+    const entries: IndexEntry[] = [
+      {
+        key: normalize(surface, NORM),
+        term: surface,
+        target: { ...target, alias: surface },
+      },
+    ];
+    const index = buildMatchIndex(entries);
+    const text = `before ${surface} after`;
+    const skips = computeSkipRanges(text, DEFAULT_SKIP_OPTIONS);
+    return findReplacements(text, index, skips, {
+      normalize: NORM,
+      oneLinkPerFile: false,
+      sourcePath,
+    });
+  }
+
+  it("folder-scoped target links only when source shares the parent folder", () => {
+    expect(
+      withScope("Personal/today.md", { canonical: "Notes", path: "Personal/Notes.md", scope: "folder" }, "nts"),
+    ).toHaveLength(1);
+    expect(
+      withScope("Work/today.md", { canonical: "Notes", path: "Personal/Notes.md", scope: "folder" }, "nts"),
+    ).toHaveLength(0);
+  });
+
+  it("root-scoped target links only when source shares the top-level segment", () => {
+    expect(
+      withScope(
+        "Programming/Other/x.md",
+        { canonical: "View", path: "Programming/Ideas/View.md", scope: "root" },
+        "views",
+      ),
+    ).toHaveLength(1);
+    expect(
+      withScope(
+        "Journal/2026.md",
+        { canonical: "View", path: "Programming/Ideas/View.md", scope: "root" },
+        "views",
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("block-scoped target never matches", () => {
+    expect(
+      withScope("anywhere.md", { canonical: "View", path: "View.md", scope: "block" }, "View"),
+    ).toHaveLength(0);
   });
 });
 
