@@ -8,7 +8,7 @@ Converts similar matching words into wiki links on the go. Highly customizable. 
 
 - **Automatic detection** (by default) of matching search results when you modify a file by using smart matching to filter the closest possible link. See the match case behavior below for the specifics.
 - Code blocks, inline code, existing links,
-  YAML properties, and math are always skipped. Headings and tables can be skipped with their respective settings option.
+  YAML properties, tables, and math are always skipped. Headings can be skipped with their respective settings option.
 - Include/exclude folders for manual vault linking. Excluded notes are neither scanned nor used as link targets.
 - **Alias masterlist:** allows a single note file to map to multiple aliases, with automatic backfill into each note's YAML alias field.
 - **Highly configurable**: Toggle features on or off in the plugin's settings page.
@@ -52,7 +52,6 @@ You can configure the following options in the settings page to turn features on
 | **Match base form** | Links simple plurals to their singular note. Turned off by default to avoid over-linking. |
 | **One link per file** | Links each target note only once per file, with first occurrence basis. On by default. |
 | **Skip → Headings** | Don't link inside headings. Turned off by default. |
-| **Skip → Tables** | Don't link inside tables. Turned off by default.|
 | **Link on save** | Auto-link notes when the current note is modified. |
 | **Include folders** | Include folders based on path. One folder path per line. Empty defaults to whole vault. |
 | **Exclude folders** | Exclude folders based on path. Excluded notes are skipped and never used as targets. |

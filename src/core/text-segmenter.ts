@@ -30,7 +30,7 @@ export const DEFAULT_SKIP_OPTIONS: SkipOptions = {
   existingLinks: true,
   headings: false,
   math: true,
-  tables: false,
+  tables: true,
 };
 
 /** A half-open character range [start, end) to skip. */
