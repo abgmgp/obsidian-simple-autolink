@@ -32,7 +32,10 @@ export function linkContent(
   index: MatchIndex,
   settings: AutoLinkSettings,
 ): LinkResult {
-  const skips = computeSkipRanges(input, settings.skip);
+  // Tables are always skipped: the alias `|` in `[[Canonical|surface]]`
+  // collides with the GFM cell separator, breaking both the link and the
+  // table. Force `tables: true` regardless of any stale persisted value.
+  const skips = computeSkipRanges(input, { ...settings.skip, tables: true });
   const replacements = findReplacements(input, index, skips, {
     normalize: settings.normalize,
     oneLinkPerFile: settings.oneLinkPerFile,

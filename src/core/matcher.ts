@@ -152,6 +152,15 @@ export function findReplacements(
     for (let span = maxSpan; span >= 1; span--) {
       const first = tokens[ti];
       const last = tokens[ti + span - 1];
+
+      // A multi-word match must be a single contiguous phrase. Reject windows
+      // whose inter-token gap contains a newline or an unescaped `|` — those
+      // are structural boundaries (lines, table cells, wikilink alias
+      // separator) and a real phrase never crosses them. Without this guard
+      // the matcher can produce links like `[[Timetable|time | table]]` that
+      // span table cells and break Obsidian's link parser.
+      if (span > 1 && spansPhraseBoundary(text, tokens, ti, span)) continue;
+
       const surface = text.slice(first.start, last.end);
 
       // (2) Skips: don't link inside a skip range (existing links, code, …).
@@ -190,6 +199,25 @@ export function findReplacements(
   }
 
   return replacements;
+}
+
+/**
+ * True if any gap between consecutive tokens in the window [ti, ti+span)
+ * contains a newline or an unescaped `|`. Caller guarantees span > 1.
+ */
+function spansPhraseBoundary(
+  text: string,
+  tokens: Token[],
+  ti: number,
+  span: number,
+): boolean {
+  for (let k = 0; k < span - 1; k++) {
+    const gap = text.slice(tokens[ti + k].end, tokens[ti + k + 1].start);
+    if (gap.includes("\n")) return true;
+    // unescaped pipe: a `|` not preceded by `\` (mirrors isTableRow in text-segmenter)
+    if (/(^|[^\\])\|/.test(gap)) return true;
+  }
+  return false;
 }
 
 /**

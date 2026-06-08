@@ -71,9 +71,10 @@ export class AutoLinkSettingTab extends PluginSettingTab {
       .setHeading();
 
     this.skipToggle(containerEl, "Headings", "headings");
-    this.skipToggle(containerEl, "Tables", "tables");
-    // The remaining skip elements (code, links, frontmatter, math) are always
-    // skipped for safety and are not user-configurable to prevent corruption.
+    // The remaining skip elements (tables, code, links, frontmatter, math)
+    // are always skipped for safety and are not user-configurable to prevent
+    // corruption. Tables are forced because the alias `|` in
+    // `[[Canonical|surface]]` would collide with the cell separator.
 
     new Setting(containerEl).setName("Triggers").setHeading();
 
