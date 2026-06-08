@@ -6,6 +6,7 @@
 
 import { normalize, NormalizeOptions } from "./normalizer";
 import { SkipRange, rangeOverlaps } from "./text-segmenter";
+import type { AliasScope } from "./alias-masterlist";
 
 /** A resolvable link target. `path` identifies the note (used for self-ref + dedupe). */
 export interface LinkTarget {
@@ -19,6 +20,42 @@ export interface LinkTarget {
    * title matches.
    */
   alias?: string;
+  /**
+   * Optional scope restriction inherited from a masterlist entry. When set, the
+   * matcher only emits a replacement if the source file passes the scope check.
+   * Undefined or "vault" means vault-wide (default).
+   */
+  scope?: AliasScope;
+}
+
+/** Parent directory of a vault path (substring before the last '/'). */
+function parentDir(path: string): string {
+  const i = path.lastIndexOf("/");
+  return i === -1 ? "" : path.slice(0, i);
+}
+
+/** Top-level folder segment of a vault path (substring before the first '/'). */
+function rootSegment(path: string): string {
+  const i = path.indexOf("/");
+  return i === -1 ? "" : path.slice(0, i);
+}
+
+/**
+ * Decide whether a target's scope allows linking it from `sourcePath`.
+ * Pure — exported for testing.
+ */
+export function scopeAllows(target: LinkTarget, sourcePath: string): boolean {
+  switch (target.scope) {
+    case undefined:
+    case "vault":
+      return true;
+    case "block":
+      return false;
+    case "folder":
+      return parentDir(target.path) === parentDir(sourcePath);
+    case "root":
+      return rootSegment(target.path) === rootSegment(sourcePath);
+  }
 }
 
 /**
@@ -174,6 +211,8 @@ export function findReplacements(
       if (!entry) continue;
       // (3) Self-reference guard: never link a note to itself.
       if (entry.target.path === opts.sourcePath) continue;
+      // (3b) Scope guard: masterlist-scoped targets only link within scope.
+      if (!scopeAllows(entry.target, opts.sourcePath)) continue;
       // (5) One-link-per-file dedupe (counts existing links via the seed above).
       if (opts.oneLinkPerFile && linkedTargets.has(entry.target.path)) continue;
 
