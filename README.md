@@ -100,13 +100,41 @@ Timetable: time table, tt
 API: application programming interface, api
 ```
 
+### Tagging
+
+Keywords set inside the masterlist are set to affect the entire vault by default. You can change the affected areas by adding case-insensitive tags (`block`, `folder`, or `root`) as prefix for the line/s that should be affected. See the following formats below for reference:
+
+```
+block: Note name                          # never auto-link this note's title or its aliases
+block: Note name: alias1, alias2          # suppress only those specific surface terms
+folder: Note name                         # link only when the source note shares the target's parent folder (folder1/note.md). Applies for both note name and aliases.
+folder: Note name: alias1, alias2         
+root: Note name                           # link only when the source note shares the target's top-level folder (folder1/folder2/folder3/note.md, all tagging will take effect as long as the detected tag is under folder1). Applies for both note name and aliases.
+root: Note name: alias1, alias2           
+```
+
+- **`block`** — With no aliases listed, it suppresses the note's title and all associated aliases from auto-linking. With aliases listed, only those words will be blocked. THe title folder will still link.
+- **`folder`** — limits matching to notes in the same parent folder as the target. Useful for short or ambiguous aliases that should only resolve within a directory (i.e. activity-specific definitions).
+- **`root`** — limits matching to notes that share the target's top-level folder. Example: a target at `Definitions/Actions/View.md` is only linked from sources under `Definitions/**`. USeful for category-based tagging.
+
+Lines without a recognized scope prefix keep the original vault-wide behavior, so existing masterlist files are still supported.
+
+Example:
+
+```
+Name1: alias1, alias2
+block: Name2
+folder: Name3: alias3, alias4, alias5
+root: Name4: alias6, alias7
+```
+
 ### YAML Property Auto-Add
 
 When **"Write aliases back to notes"** is on (default), the first time a note is linked via a masterlist alias, that alias is added to the note's YAML `aliases` property. No existing aliases are removed or reordered. This makes the alias work everywhere Obsidian resolves links, not just inside the plugin.
 
 ## Roadmap
-- Improve alias masterlist to allow blacklisting of certain keywords
-- Choice for certain keywords to auto-link up to the base folder only, specific folders, or to exclude specific folders
+- ~~Improve alias masterlist to allow blacklisting of certain keywords~~ - Implemented as of version 1.1.0
+- ~~Choice for certain keywords to auto-link up to the base folder only, specific folders, or to exclude specific folders~~ Implemented as of version 1.1.0
 - **You tell me**!
 
 ## Privacy & Safety
