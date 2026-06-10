@@ -56,6 +56,15 @@ function escapeRegExp(c: string): string {
   return c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * True if the path is an Excalidraw drawing file. These store JSON/SVG payload
+ * in the body; rewriting them corrupts the drawing, so they are unconditionally
+ * skipped by auto-link.
+ */
+export function isExcalidrawPath(path: string): boolean {
+  return path.toLowerCase().endsWith(".excalidraw.md");
+}
+
 /** True if `path` matches any pattern in the list. Empty list => false. */
 export function matchesAny(path: string, globs: string[]): boolean {
   for (const g of globs) {
@@ -69,11 +78,13 @@ export function matchesAny(path: string, globs: string[]): boolean {
 /**
  * Decide whether a path is in scope given include/exclude lists.
  * Rules:
+ *  - Excalidraw files (`*.excalidraw.md`) are always out of scope.
  *  - Empty include list => everything is included (then exclude applies).
  *  - Non-empty include list => path must match an include pattern.
  *  - Exclude always wins over include.
  */
 export function isInScope(path: string, includeGlobs: string[], excludeGlobs: string[]): boolean {
+  if (isExcalidrawPath(path)) return false;
   if (matchesAny(path, excludeGlobs)) return false;
   if (includeGlobs.some((g) => g.trim() !== "")) {
     return matchesAny(path, includeGlobs);
