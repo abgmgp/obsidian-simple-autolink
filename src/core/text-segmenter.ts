@@ -130,6 +130,9 @@ export function computeSkipRanges(text: string, opts: SkipOptions): SkipRange[] 
     ranges.push(...scanTags(text, (pos) => rangeOverlaps(blockSkips, pos, pos + 1)));
   }
 
+  // --- Bare URLs (http:// / https://): never link inside them. ---
+  ranges.push(...scanUrls(text, (pos) => rangeOverlaps(blockSkips, pos, pos + 1)));
+
   return mergeRanges(ranges);
 }
 
@@ -156,7 +159,20 @@ function scanTags(text: string, inBlock: (pos: number) => boolean): SkipRange[] 
   return ranges;
 }
 
-/** Match a fenced-code opening/closing line; returns the fence char or null. */
+/**
+ * Find bare URL spans (`http://...` / `https://...`). Runs to end of the
+ * non-whitespace run so words inside the URL are never linked.
+ */
+function scanUrls(text: string, inBlock: (pos: number) => boolean): SkipRange[] {
+  const ranges: SkipRange[] = [];
+  const re = /https?:\/\/\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (inBlock(m.index)) continue;
+    ranges.push({ start: m.index, end: m.index + m[0].length });
+  }
+  return ranges;
+}
 function fenceMatch(line: string): string | null {
   const m = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
   if (!m) return null;

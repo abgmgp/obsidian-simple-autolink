@@ -244,6 +244,22 @@ describe("findReplacements - scope guard", () => {
   });
 });
 
+describe("bare URLs are skipped", () => {
+  it("does not link words inside a bare https URL", () => {
+    const { replacements } = link("see https://github.com/foo/bar here", [
+      ["github", "GitHub", "GitHub.md"],
+      ["foo", "Foo", "Foo.md"],
+    ]);
+    expect(replacements).toEqual([]);
+  });
+
+  it("still links the same word outside the URL", () => {
+    const { out } = link("github is great https://github.com/foo/bar", [
+      ["github", "GitHub", "GitHub.md"],
+    ]);
+    expect(out).toContain("[[GitHub|github]]");
+  });
+});
 describe("headings are user-configurable", () => {
   it("links inside headings by default", () => {
     expect(DEFAULT_SKIP_OPTIONS.headings).toBe(false);
