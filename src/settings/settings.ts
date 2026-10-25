@@ -15,6 +15,8 @@ export interface AutoLinkSettings {
   oneLinkPerFile: boolean;
   /** Run auto-link on note save. */
   onSave: boolean;
+  /** Run auto-link when the focused file changes. */
+  onFocus: boolean;
   /** Glob patterns of folders to include. Empty = whole vault. */
   includeGlobs: string[];
   /** Glob patterns of folders to exclude. */
@@ -32,6 +34,7 @@ export const DEFAULT_SETTINGS: AutoLinkSettings = {
   skip: { ...DEFAULT_SKIP_OPTIONS },
   oneLinkPerFile: true,
   onSave: false,
+  onFocus: false,
   includeGlobs: [],
   excludeGlobs: [],
   masterlistEnabled: false,

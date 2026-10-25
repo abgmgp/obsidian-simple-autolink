@@ -4,6 +4,7 @@ import { MASTERLIST_TEMPLATE } from "./core/alias-masterlist";
 import { AutoLinkSettings, DEFAULT_SETTINGS } from "./settings/settings";
 import { runFullVault } from "./triggers/full-vault";
 import { OnSaveTrigger } from "./triggers/on-save";
+import { OnFocusTrigger } from "./triggers/on-focus";
 import { IndexCache } from "./core/index-cache";
 import { MasterlistLoader } from "./triggers/masterlist-loader";
 import { AutoLinkSettingTab } from "./settings/settings-tab";
@@ -16,6 +17,7 @@ export default class AutoLinkPlugin extends Plugin {
   private running = false;
   private indexCache!: IndexCache;
   private onSave!: OnSaveTrigger;
+  private onFocus!: OnFocusTrigger;
   private masterlist!: MasterlistLoader;
 
   async onload(): Promise<void> {
@@ -46,6 +48,14 @@ export default class AutoLinkPlugin extends Plugin {
       inScope: (file) => this.fileFilter(file),
     });
 
+    this.onFocus = new OnFocusTrigger({
+      app: this.app,
+      log: this.log,
+      getSettings: () => this.settings,
+      getIndex: () => this.indexCache.get(),
+      inScope: (file) => this.fileFilter(file),
+    });
+
     this.addRibbonIcon("link", "Auto-link: scan whole vault", () => {
       void this.scanVault();
     });
@@ -65,14 +75,18 @@ export default class AutoLinkPlugin extends Plugin {
     // note's frontmatter (e.g. its aliases) updates.
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.indexCache.invalidate()));
     this.registerEvent(this.app.metadataCache.on("changed", () => this.indexCache.invalidate()));
-    this.registerEvent(this.app.vault.on("rename", (f, oldPath) => {
-      this.indexCache.invalidate();
-      this.masterlist.handleVaultEvent(f, oldPath);
-    }));
-    this.registerEvent(this.app.vault.on("delete", (f) => {
-      this.indexCache.invalidate();
-      this.masterlist.handleVaultEvent(f);
-    }));
+    this.registerEvent(
+      this.app.vault.on("rename", (f, oldPath) => {
+        this.indexCache.invalidate();
+        this.masterlist.handleVaultEvent(f, oldPath);
+      }),
+    );
+    this.registerEvent(
+      this.app.vault.on("delete", (f) => {
+        this.indexCache.invalidate();
+        this.masterlist.handleVaultEvent(f);
+      }),
+    );
     this.registerEvent(
       this.app.vault.on("modify", (f: TAbstractFile) => this.masterlist.handleVaultEvent(f)),
     );
@@ -89,6 +103,7 @@ export default class AutoLinkPlugin extends Plugin {
 
   onunload(): void {
     this.onSave?.dispose();
+    this.onFocus?.dispose();
     this.log.info("unloaded");
   }
 
@@ -102,6 +117,15 @@ export default class AutoLinkPlugin extends Plugin {
       this.onSave.enable();
     } else {
       this.onSave.dispose();
+    }
+  }
+
+  /** Enable or disable the on-focus trigger to match the current setting. */
+  applyOnFocusSetting(): void {
+    if (this.settings.onFocus) {
+      this.onFocus.enable();
+    } else {
+      this.onFocus.dispose();
     }
   }
 
@@ -140,6 +164,7 @@ export default class AutoLinkPlugin extends Plugin {
     await this.masterlist.reload();
     this.indexCache.invalidate();
     this.applyOnSaveSetting();
+    this.applyOnFocusSetting();
   }
 
   /** Problems from the last masterlist parse, for the settings tab to surface. */

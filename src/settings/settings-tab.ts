@@ -88,6 +88,16 @@ export class AutoLinkSettingTab extends PluginSettingTab {
         }),
       );
 
+    new Setting(containerEl)
+      .setName("Link on focus")
+      .setDesc("Run auto-link automatically when the active note changes.")
+      .addToggle((t) =>
+        t.setValue(s.onFocus).onChange(async (v) => {
+          s.onFocus = v;
+          await this.plugin.saveSettings();
+        }),
+      );
+
     new Setting(containerEl).setName("Paths").setHeading();
 
     new Setting(containerEl)
@@ -166,9 +176,7 @@ export class AutoLinkSettingTab extends PluginSettingTab {
 
       new Setting(containerEl)
         .setName("Create masterlist template")
-        .setDesc(
-          "Create a new, pre-filled masterlist file at the path above.",
-        )
+        .setDesc("Create a new, pre-filled masterlist file at the path above.")
         .addButton((b) =>
           b
             .setButtonText("Create template")
